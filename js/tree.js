@@ -1,6 +1,25 @@
 const promises = [
-    d3.json('./data/flare.json')
+    d3.json('./data/miserables.Valjean.nodes.json')
 ];
+
+function hopColor(hop){
+    switch(hop) {
+        case -1:
+            return 'black';
+        case 0:
+            return 'black';
+        case 1:
+            return 'red';
+        case 2:
+            return 'blue';
+        case 3: 
+            return 'turquoise';
+        case 4: 
+            return 'green';
+        case 5:
+            return 'orange'
+    };
+}
 
 Promise.all(promises).then(function(promisedData){
 
@@ -8,11 +27,16 @@ Promise.all(promises).then(function(promisedData){
     const data = promisedData[0]
     console.log(data)
 
-    const width = 928;
+    const width = 980;
 
     // Compute the tree height; this approach will allow the height of the
     // SVG to scale according to the breadth (width) of the tree layout.
-    const root = d3.hierarchy(data);
+    //const root = d3.hierarchy(data);
+    const root = d3.stratify()
+        .id((d) => d.id)
+        .parentId((d) => d.parent)
+        (data)
+
     console.log(root)
     const dx = 10;
     const dy = width / (root.height + 1);
@@ -21,7 +45,7 @@ Promise.all(promises).then(function(promisedData){
     const tree = d3.tree().nodeSize([dx, dy]);
 
     // Sort the tree and apply the layout.
-    root.sort((a, b) => d3.ascending(a.data.name, b.data.name));
+    root.sort((a, b) => d3.descending(a.data.weighted, b.data.weighted));
     tree(root);
 
     // Compute the extent of the tree. Note that x and y are swapped here
@@ -65,14 +89,14 @@ Promise.all(promises).then(function(promisedData){
         .attr("transform", d => `translate(${d.y},${d.x})`);
 
     node.append("circle")
-        .attr("fill", d => d.children ? "#555" : "#999")
+        .attr("fill", d => hopColor(d.data.hop))
         .attr("r", 2.5);
 
     node.append("text")
         .attr("dy", "0.31em")
         .attr("x", d => d.children ? -6 : 6)
         .attr("text-anchor", d => d.children ? "end" : "start")
-        .text(d => d.data.name)
+        .text(d => d.data.id)
     .clone(true).lower()
         .attr("stroke", "white");
 
